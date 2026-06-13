@@ -24,7 +24,7 @@ A fast-paced 2D platformer shooter built with Python and Pygame. Originally crea
 - **Live score system** — earn 100 points per core destroyed
 - **Combo multiplier** — destroy cores quickly to multiply your score
 - **Death counter** — tracks how many times you've died
-- **Persistent high score** — saved to highscore.txt, loads on startup
+- **Persistent high score** — saved to `highscore.txt`, loads on startup
 - **Double jump boost** — second jump launches you higher
 - **Death flash effect** — screen flashes when you die
 - **"YOU DIED" screen** — displayed on death before restart
@@ -32,11 +32,14 @@ A fast-paced 2D platformer shooter built with Python and Pygame. Originally crea
 
 ## Setup
 
+```bash
 pip3 install pygame
 python3 Aeroblaster.py
+```
 
 ## Project Structure
 
+```
 Aeroblaster.py       # Main game loop
 highscore.txt        # Auto-generated, stores your best score
 data/
@@ -49,7 +52,8 @@ data/
   images/            # Sprites, tiles, fonts
   sfx/               # Sound effects
   music.wav          # Background music
+```
 
 ## Credits
 
-Original game by DaFluffyPotato. Modified and expanded by Omar-2345.
+Original game by [DaFluffyPotato](https://dafluffypotato.com). Modified and expanded by Omar-2345.

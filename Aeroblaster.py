@@ -728,9 +728,9 @@ while True:
     # UI ----------------------------------------------------- #
     text.show_text(convert_time(total_time) + ' > ' + convert_time(level_time), 3, 3, 1, 9999, font, screen, 3)
     text.show_text('level ' + str(level), 3, 12, 1, 9999, font, screen, 3)
-    text.show_text('score: ' + str(score), 3, 30, 1, 9999, font, screen, 3)
-    text.show_text('deaths: ' + str(deaths), 3, 45, 1, 9999, font, screen, 3)
-    text.show_text('best: ' + str(high_score), 3, 60, 1, 9999, font, screen, 3)
+    text.show_text('score: ' + str(score), 3, 75, 1, 9999, font, screen, 3)
+    text.show_text('deaths: ' + str(deaths), 3, 90, 1, 9999, font, screen, 3)
+    text.show_text('best: ' + str(high_score), 3, 105, 1, 9999, font, screen, 3)
     if combo > 1:
         text.show_text('combo x' + str(combo), 3, 75, 1, 9999, font, screen, 3)
     screen.blit(pygame.transform.scale(core_img, (33, 36)), (9, 61))
