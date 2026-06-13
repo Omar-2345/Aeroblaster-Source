@@ -169,6 +169,8 @@ level_time = 0
 win = 0
 moved = False
 score = 0
+combo = 0
+combo_timer = 0
 deaths = 0
 high_score = 0
 if os.path.exists('highscore.txt'):
@@ -214,6 +216,11 @@ while True:
         level_time += dt * game_speed
     display.fill((34,23,36))
     main_display.fill((0,0,0))
+
+    if combo_timer > 0:
+        combo_timer  -= 1
+    else:
+        combo = 0
 
     if shoot_s_cooldown > 0:
         shoot_s_cooldown -= 1
@@ -383,6 +390,8 @@ while True:
     # Player ------------------------------------------------- #
     player_movement = [0, 0]
     player_grav += 0.3 * dtf(dt) * game_speed
+    if dead:
+        game_speed = max(game_speed, 0.3)
     player_grav = min(3, player_grav)
     player.change_frame(1)
     player_movement[1] = player_grav * game_speed * dtf(dt)
@@ -523,7 +532,9 @@ while True:
                             entity[1] = True
                             if entity[0].type == 'core':
                                 point_s.play()
-                                score += 100
+                                combo += 1
+                                combo_timer = 180
+                                score += 100 * max(1, combo)
             if not popped:
                 pygame.draw.line(main_display, (255, 255, 255), (bullet[1][0] - scroll[0], bullet[1][1] - scroll[1]), (bullet[1][0] + math.cos(bullet[2]) * 6 - scroll[0], bullet[1][1] + math.sin(bullet[2]) * 6 - scroll[1]), 2)
         if not popped:
@@ -635,6 +646,7 @@ while True:
         main_display.blit(turret_example_img, (122, 57))
         main_display.blit(shot_example_img, (163, 57))
     if dead:
+        text.show_text('YOU DIED', 150 - int(get_text_width('YOU DIED', 1) / 2), 35, 1, 9999, font, main_display)
         text.show_text('click to restart', 150 - int(get_text_width('click to restart', 1) / 2), 97, 1, 9999, font, main_display)
         if click:
             dead = False
@@ -707,7 +719,7 @@ while True:
     mask_surf.set_colorkey((0,0,0))
     display.blit(mask_surf, (2, 2))
     display.blit(main_display, (0, 0))
-    
+
     # Update ------------------------------------------------- #
     if win == 0:
         screen.blit(pygame.transform.scale(display, (900 + int(bar_height * 3), 600 + int(bar_height * 3))), (-6 - int(bar_height * 1.5), -6 - int(bar_height * 1.5)))
@@ -719,6 +731,8 @@ while True:
     text.show_text('score: ' + str(score), 3, 30, 1, 9999, font, screen, 3)
     text.show_text('deaths: ' + str(deaths), 3, 45, 1, 9999, font, screen, 3)
     text.show_text('best: ' + str(high_score), 3, 60, 1, 9999, font, screen, 3)
+    if combo > 1:
+        text.show_text('combo x' + str(combo), 3, 75, 1, 9999, font, screen, 3)
     screen.blit(pygame.transform.scale(core_img, (33, 36)), (9, 61))
     text.show_text(str(total_cores - cores_left) + '/' + str(total_cores), 16, 23, 1, 9999, font, screen, 3)
     #text.show_text(str(current_fps) + 'fps', 3, 35, 1, 9999, font, screen, 3)
