@@ -169,6 +169,7 @@ level_time = 0
 win = 0
 moved = False
 score = 0
+shake = 
 combo = 0
 combo_timer = 0
 deaths = 0
@@ -248,6 +249,7 @@ while True:
                 break
             player = e.entity(spawnpoint[0] + 4, spawnpoint[1] - 17, 8, 15, 'player')
             player.set_offset([-3, -2])
+            player_speed = 2 + (level - 1) * 0.3
             bullets = []
             explosion_particles = []
             particles = []
@@ -264,9 +266,13 @@ while True:
     if abs(1 - game_speed) < 0.05:
         game_speed = 1
 
-    scroll = [int(true_scroll[0]), int(true_scroll[1])]
+    if shake > 0:
+        shake -= 1
+    scroll = [int(true_scroll[0]) + random.randint(-shake, shake), int(true_scroll[1]) + 
+    random.randint(-shake, shake)]
 
     lowest = [10, None]
+
     for i, source in enumerate(camera_sources):
         if source[0] < lowest[0]:
             lowest = [source[0], i]
@@ -350,7 +356,7 @@ while True:
             angle = entity[0].get_point_angle(player_target_pos)
             entity[2] += ((((math.degrees(angle) - entity[2]) + 180) % 360) - 180) / 20 * dtf(dt) * game_speed
             entity[3] += game_speed * dtf(dt)
-            if entity[3] > 20:
+            if entity[3] > max(8, 20 - level * 2):                
                 if moved:
                     if shoot_s_cooldown == 0:
                         turret_shoot_s.play()
@@ -499,6 +505,7 @@ while True:
                             particles.append(e.particle(player.x + random.randint(0, player.size_x), player.y + random.randint(0, player.size_y), 'p', [math.cos(rot) * speed, math.sin(rot) * speed], 0.03, random.randint(10, 35) / 10, random.choice([(255, 255, 255), (49, 89, 134), (49, 89, 134), (49, 89, 134), (141, 137, 163)])))
                         dead = True
                         deaths += 1
+                        shake = 8
                         flashes.append([[player.get_center()[0], player.get_center()[1]], 80, 0, 0, 0])
                         flashes.append([[player.get_center()[0], player.get_center()[1]], 80, math.pi, 0, 0])
                         high_score = score
@@ -753,7 +760,8 @@ while True:
                 sys.exit()
     text.show_text('You Win!', 150 - get_text_width('You Win!', 1) / 2, 90, 1, 9999, font, display)
     text.show_text(convert_time(total_time), 150 - get_text_width(convert_time(total_time), 1) / 2, 100, 1, 9999, font, display)
+    text.show_text('score: ' + str(score), 150 - int(get_text_width('score: ' + str(score), 1) / 2), 110, 1, 9999, font, display)
+    text.show_text('deaths: ' + str(deaths), 150 - int(get_text_width('deaths: ' + str(deaths), 1) / 2), 120, 1, 9999, font, display)
     screen.blit(pygame.transform.scale(display, (900, 600)), (-6, -6))
     pygame.display.update()
     mainClock.tick(60)
-    
