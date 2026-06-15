@@ -2,6 +2,7 @@
 # Setup Python ----------------------------------------------- #
 import pygame, sys, json, math, random
 import os
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 from data.tileset_loader import load_tileset
 import data.fps as fps
 import data.text as text
@@ -206,7 +207,56 @@ pygame.mixer.music.set_volume(0.5)
 
 shoot_s_cooldown = 0
 
+# Main Menu -------------------------------------------------- #
+def show_main_menu():
+    bg_timer = 0
+    last_menu_frame = pygame.time.get_ticks()
+    while True:
+        dt_menu = pygame.time.get_ticks() - last_menu_frame
+        last_menu_frame = pygame.time.get_ticks()
+
+        display.fill((34, 23, 36))
+        main_display.fill((0, 0, 0))
+
+        bg_timer = (bg_timer + dt_menu / 1000 * 60 * 0.5) % 20
+        for i in range(16):
+            ii = i - 4
+            pygame.draw.line(display, (8, 5, 8),
+                (0, ii * 20 - bg_timer),
+                (display.get_width(), ii * 20 - bg_timer + 30), 7)
+
+        title = 'AEROBLASTER'
+        text.show_text(title, 150 - int(get_text_width(title, 1) / 2), 68, 1, 9999, font, display)
+        hs_str = 'best: ' + str(high_score)
+        text.show_text(hs_str, 150 - int(get_text_width(hs_str, 1) / 2), 90, 1, 9999, font, display)
+        prompt = 'click to play'
+        text.show_text(prompt, 150 - int(get_text_width(prompt, 1) / 2), 110, 1, 9999, font, display)
+
+        mask = pygame.mask.from_surface(main_display)
+        mask_surf = mask.to_surface(setcolor=(8, 5, 8))
+        mask_surf.set_colorkey((0, 0, 0))
+        display.blit(mask_surf, (2, 2))
+        display.blit(main_display, (0, 0))
+
+        screen.blit(pygame.transform.scale(display, (900, 600)), (-6, -6))
+        pygame.display.update()
+        mainClock.tick(60)
+
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+            if event.type == MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    return
+
 # Loop ------------------------------------------------------- #
+
+show_main_menu()
 while True:
     
     # Background --------------------------------------------- #
