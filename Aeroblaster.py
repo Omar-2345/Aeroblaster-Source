@@ -832,8 +832,69 @@ while True:
     current_fps = int(fps.get_framerate())
     mainClock.tick(60)
 
+new_best = score > high_score
+if new_best:
+    high_score = score
+    with open('highscore.txt', 'w') as f:
+        f.write(str(high_score))
+
+if deaths == 0:
+    rank = 'S'
+elif deaths <= 2:
+    rank = 'A'
+elif deaths <= 5:
+    rank = 'B'
+else:
+    rank = 'C'
+
+win_bg_timer = 0
+win_screen_timer = 0
+last_win_frame = pygame.time.get_ticks()
+
 while True:
-    display.fill((34,23,36))
+    dt_win = pygame.time.get_ticks() - last_win_frame
+    last_win_frame = pygame.time.get_ticks()
+    win_screen_timer += 1
+
+    display.fill((34, 23, 36))
+    main_display.fill((0, 0, 0))
+
+    win_bg_timer = (win_bg_timer + dt_win / 1000 * 60 * 0.5) % 20
+    for i in range(16):
+        ii = i - 4
+        pygame.draw.line(display, (8, 5, 8),
+            (0, ii * 20 - win_bg_timer),
+            (display.get_width(), ii * 20 - win_bg_timer + 30), 7)
+
+    if win_screen_timer > 10:
+        text.show_text('YOU WIN!', 150 - int(get_text_width('YOU WIN!', 1) / 2), 40, 1, 9999, font, display)
+    if win_screen_timer > 30:
+        rank_str = 'rank: ' + rank
+        text.show_text(rank_str, 150 - int(get_text_width(rank_str, 1) / 2), 60, 1, 9999, font, display)
+    if win_screen_timer > 50:
+        time_str = 'time: ' + convert_time(total_time)
+        text.show_text(time_str, 150 - int(get_text_width(time_str, 1) / 2), 80, 1, 9999, font, display)
+    if win_screen_timer > 70:
+        score_str = 'score: ' + str(score)
+        text.show_text(score_str, 150 - int(get_text_width(score_str, 1) / 2), 92, 1, 9999, font, display)
+    if win_screen_timer > 90:
+        deaths_str = 'deaths: ' + str(deaths)
+        text.show_text(deaths_str, 150 - int(get_text_width(deaths_str, 1) / 2), 104, 1, 9999, font, display)
+    if win_screen_timer > 110 and new_best:
+        text.show_text('new best!', 150 - int(get_text_width('new best!', 1) / 2), 120, 1, 9999, font, display)
+    if win_screen_timer > 130:
+        text.show_text('esc to quit', 150 - int(get_text_width('esc to quit', 1) / 2), 145, 1, 9999, font, display)
+
+    mask = pygame.mask.from_surface(main_display)
+    mask_surf = mask.to_surface(setcolor=(8, 5, 8))
+    mask_surf.set_colorkey((0, 0, 0))
+    display.blit(mask_surf, (2, 2))
+    display.blit(main_display, (0, 0))
+
+    screen.blit(pygame.transform.scale(display, (900, 600)), (-6, -6))
+    pygame.display.update()
+    mainClock.tick(60)
+
     for event in pygame.event.get():
         if event.type == QUIT:
             pygame.quit()
@@ -842,10 +903,3 @@ while True:
             if event.key == K_ESCAPE:
                 pygame.quit()
                 sys.exit()
-    text.show_text('You Win!', 150 - get_text_width('You Win!', 1) / 2, 90, 1, 9999, font, display)
-    text.show_text(convert_time(total_time), 150 - get_text_width(convert_time(total_time), 1) / 2, 100, 1, 9999, font, display)
-    text.show_text('score: ' + str(score), 150 - int(get_text_width('score: ' + str(score), 1) / 2), 110, 1, 9999, font, display)
-    text.show_text('deaths: ' + str(deaths), 150 - int(get_text_width('deaths: ' + str(deaths), 1) / 2), 120, 1, 9999, font, display)
-    screen.blit(pygame.transform.scale(display, (900, 600)), (-6, -6))
-    pygame.display.update()
-    mainClock.tick(60)
