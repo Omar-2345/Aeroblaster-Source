@@ -136,7 +136,7 @@ def load_level(number):
             remove_list.append(tile)
             entity_dat = [e.entity(final_tile_map[tile][1][0] * 16 + entity_info[final_tile_map[tile][0]][3], final_tile_map[tile][1][1] * 16 + entity_info[final_tile_map[tile][0]][4], entity_info[final_tile_map[tile][0]][0], entity_info[final_tile_map[tile][0]][1], entity_info[final_tile_map[tile][0]][2]), False]
             if final_tile_map[tile][0] == 15:
-                entity_dat += [0, 0]
+                entity_dat += [0, 0, 0]  # angle, timer, turret_type (0=normal 1=rapid)
             if final_tile_map[tile][0] == 14:
                 total_cores += 1
             entities.append(entity_dat)
@@ -174,6 +174,8 @@ shake = 0
 combo = 0
 combo_timer = 0
 deaths = 0
+player_hp = 3
+invincibility_timer = 0
 high_score = 0
 if os.path.exists('highscore.txt'):
     with open('highscore.txt', 'r') as f:
@@ -276,6 +278,8 @@ while True:
 
     if shoot_s_cooldown > 0:
         shoot_s_cooldown -= 1
+    if invincibility_timer > 0:
+        invincibility_timer -= 1
 
     background_timer = (background_timer + dtf(dt) * game_speed * 0.5) % 20
     for i in range(16):
@@ -298,6 +302,11 @@ while True:
                 tile_map, entities, map_height, spawnpoint, total_cores, limits = load_level(level)
             except FileNotFoundError:
                 break
+            if level >= 5:
+                for ent in entities:
+                    if ent[0].type == 'turret':
+                        ent[4] = 1 if random.random() < 0.5 else 0
+            player_hp = 3
             player = e.entity(spawnpoint[0] + 4, spawnpoint[1] - 17, 8, 15, 'player')
             player.set_offset([-3, -2])
             player_speed = 2 + (level - 1) * 0.3
@@ -400,25 +409,30 @@ while True:
         entity[0].set_pos(entity[0].x, new_y)
         entity[0].change_frame(1)
         if entity[0].type == 'turret':
-            projectile_speed = 2
+            turret_type = entity[4] if len(entity) > 4 else 0
+            projectile_speed = 1.5 if turret_type == 1 else 2
+            fire_interval = max(5, 10 - level) if turret_type == 1 else max(8, 20 - level * 2)
             player_dis = player.get_distance(entity[0].get_center())
             time_dis = player_dis / projectile_speed
             player_target_pos = [player.get_center()[0] + time_dis * last_movement[0], player.get_center()[1] + time_dis * last_movement[1]]
             angle = entity[0].get_point_angle(player_target_pos)
             entity[2] += ((((math.degrees(angle) - entity[2]) + 180) % 360) - 180) / 20 * dtf(dt) * game_speed
             entity[3] += game_speed * dtf(dt)
-            if entity[3] > max(8, 20 - level * 2):                
+            if entity[3] > fire_interval:
                 if moved:
                     if shoot_s_cooldown == 0:
                         turret_shoot_s.play()
                         shoot_s_cooldown = 12
                     entity[3] = 0
-                    rot = math.radians(entity[2] + random.randint(0, 20) - 10)
+                    spread = 5 if turret_type == 1 else 10
+                    rot = math.radians(entity[2] + random.randint(0, spread * 2) - spread)
                     bullets.append(['turret', [entity[0].get_center()[0] + math.cos(rot) * 10, entity[0].get_center()[1] + 10 + math.sin(rot) * 10], rot, projectile_speed])
                     for i2 in range(3):
                         rot_offset = random.randint(0, 50) - 25
                         flashes.append([[entity[0].get_center()[0] + math.cos(rot + math.radians(rot_offset)) * 6, entity[0].get_center()[1] + 10 + math.sin(rot + math.radians(rot_offset)) * 6], random.randint(15, 35), rot + math.radians(rot_offset), 6, random.randint(0, 8)])
             e.blit_center(main_display, pygame.transform.rotate(turret_barrel_img, -entity[2]), [entity[0].get_center()[0] - scroll[0], entity[0].get_center()[1] - scroll[1] + 10])
+            if turret_type == 1:
+                pygame.draw.circle(main_display, (200, 60, 60), (int(entity[0].get_center()[0] - scroll[0]), int(entity[0].get_center()[1] - scroll[1])), 3)
         if (entity[0].type == 'core') and (entity[0].animation_frame > 40):
             if entity[0].animation_frame == 41:
                 for i2 in range(5):
@@ -548,20 +562,25 @@ while True:
             if dis < 24:
                 camera_sources.append([(dis + 50) / 150, player.get_center()])
                 if player.obj.rect.collidepoint(bullet[1]):
-                    if not dead and not win:
-                        death_s.play()
-                        for i2 in range(60):
-                            rot = math.radians(random.randint(0, 359))
-                            speed = random.randint(3, 6)
-                            particles.append(e.particle(player.x + random.randint(0, player.size_x), player.y + random.randint(0, player.size_y), 'p', [math.cos(rot) * speed, math.sin(rot) * speed], 0.03, random.randint(10, 35) / 10, random.choice([(255, 255, 255), (49, 89, 134), (49, 89, 134), (49, 89, 134), (141, 137, 163)])))
-                        dead = True
-                        deaths += 1
-                        shake = 8
-                        flashes.append([[player.get_center()[0], player.get_center()[1]], 80, 0, 0, 0])
-                        flashes.append([[player.get_center()[0], player.get_center()[1]], 80, math.pi, 0, 0])
-                        high_score = score
-                        with open('highscore.txt', 'w') as f:
+                    if not dead and not win and invincibility_timer == 0:
+                        player_hp -= 1
+                        shake = 5
+                        flashes.append([[player.get_center()[0], player.get_center()[1]], 50, 0, 0, 0])
+                        if player_hp <= 0:
+                            death_s.play()
+                            for i2 in range(60):
+                                rot = math.radians(random.randint(0, 359))
+                                speed = random.randint(3, 6)
+                                particles.append(e.particle(player.x + random.randint(0, player.size_x), player.y + random.randint(0, player.size_y), 'p', [math.cos(rot) * speed, math.sin(rot) * speed], 0.03, random.randint(10, 35) / 10, random.choice([(255, 255, 255), (49, 89, 134), (49, 89, 134), (49, 89, 134), (141, 137, 163)])))
+                            dead = True
+                            deaths += 1
+                            shake = 8
+                            flashes.append([[player.get_center()[0], player.get_center()[1]], 80, math.pi, 0, 0])
+                            high_score = score
+                            with open('highscore.txt', 'w') as f:
                                 f.write(str(high_score))
+                        else:
+                            invincibility_timer = 90
         if bullet[0] == 'player': # type, pos, angle, speed
             dis = int(bullet[3] * dtf(dt) * game_speed) + 1
             for i2 in range(dis):
@@ -723,7 +742,9 @@ while True:
             bar_height = 100
             moved = False
             player_velocity = [0, 0]
-    
+            player_hp = 3
+            invincibility_timer = 0
+
     # Buttons ------------------------------------------------ #
     click = False
     for event in pygame.event.get():
@@ -800,6 +821,7 @@ while True:
     text.show_text('deaths: ' + str(deaths), 3, 90, 1, 9999, font, screen, 3)
     text.show_text('best: ' + str(high_score), 3, 105, 1, 9999, font, screen, 3)
     text.show_text('mute: M  ' + ('ON' if muted else 'OFF'), 3, 120, 1, 9999, font, screen, 3)
+    text.show_text('hp: ' + str(player_hp), 3, 135, 1, 9999, font, screen, 3)
     if combo > 1:
         text.show_text('combo x' + str(combo), 3, 75, 1, 9999, font, screen, 3)
     screen.blit(pygame.transform.scale(core_img, (33, 36)), (9, 61))
