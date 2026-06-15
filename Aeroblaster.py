@@ -206,6 +206,7 @@ pygame.mixer.music.play(-1)
 pygame.mixer.music.set_volume(0.5)
 
 shoot_s_cooldown = 0
+muted = False
 
 # Main Menu -------------------------------------------------- #
 def show_main_menu():
@@ -746,6 +747,16 @@ while True:
                     particles.append(e.particle(player.x, player.y + player.size_y, 'p', [-1, 2], 0.5, 2, (255, 255, 255), False))
                     particles.append(e.particle(player.x + player.size_x, player.y + player.size_y, 'p', [1, 2], 0.5, 2, (255, 255, 255), False))
                     jump_s.play()
+            if event.key == K_m:
+                muted = not muted
+                vol = 0 if muted else 1
+                pygame.mixer.music.set_volume(0 if muted else 0.5)
+                jump_s.set_volume(0 if muted else 0.4)
+                shoot_s.set_volume(0 if muted else 0.3)
+                turret_shoot_s.set_volume(0 if muted else 0.6)
+                point_s.set_volume(0 if muted else 1)
+                explosion_s.set_volume(0 if muted else 1)
+                death_s.set_volume(0 if muted else 1)
             if event.key == K_SPACE:
                 if jumps > 0:
                     moved = True
@@ -788,6 +799,7 @@ while True:
     text.show_text('score: ' + str(score), 3, 75, 1, 9999, font, screen, 3)
     text.show_text('deaths: ' + str(deaths), 3, 90, 1, 9999, font, screen, 3)
     text.show_text('best: ' + str(high_score), 3, 105, 1, 9999, font, screen, 3)
+    text.show_text('mute: M  ' + ('ON' if muted else 'OFF'), 3, 120, 1, 9999, font, screen, 3)
     if combo > 1:
         text.show_text('combo x' + str(combo), 3, 75, 1, 9999, font, screen, 3)
     screen.blit(pygame.transform.scale(core_img, (33, 36)), (9, 61))
